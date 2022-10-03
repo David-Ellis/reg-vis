@@ -1,2 +1,5 @@
 # ingore cache files
 __pycache__/
+
+# ingore iPython files
+*ipynb*

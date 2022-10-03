@@ -50,8 +50,10 @@ def pack_errors(df):
 
 class reg_plot:
     def __init__(self):
-        pass
-    
+        self.font_size = 10
+        self.header_size = 11
+        self.group_size = 10.5
+        
     def load_data(self, data_path):
         extension = data_path.split(".")[-1]
         if extension == "csv":
@@ -60,9 +62,12 @@ class reg_plot:
             self.df = pd.read_excel(data_path)
     
     def plot(self):
+        # set plot size
+        plt.rc('font', size=self.font_size)
+        
         num_items = len(self.df['Odds Ratio'])
         
-        self.fig = plt.figure(figsize = (7, num_items),)
+        self.fig = plt.figure(figsize = (7, num_items-2),)
         
         
         gs = GridSpec(num_items*100 + 100, 1300)
@@ -75,7 +80,7 @@ class reg_plot:
         ax3 = plt.subplot(gs[100:, 900:])
         
         ticks = np.arange(1, num_items+1)
-        
+        ylims = [1-0.1*num_items, num_items+0.1*num_items]
         
         
         ## Headers ##
@@ -89,6 +94,8 @@ class reg_plot:
             head.set_yticks([0.5])
             head.set_yticklabels([header_labels[i]])
             head.tick_params(right = False, left = False)
+            head.tick_params(axis='both', which='major', 
+                             labelsize=self.header_size)
             # offset y ticks
             offset = ScaledTranslation(header_offset[i], 0, self.fig.dpi_scale_trans)
             for label in head.yaxis.get_majorticklabels():
@@ -103,8 +110,10 @@ class reg_plot:
         ax1.set_yticks(ticks)
         ax1.set_yticklabels(group_names[::-1])
         ax1.set_xticks([])
-        ax1.set_ylim(1-0.2*num_items, num_items+0.2*num_items)
+        ax1.set_ylim(ylims)
         ax1.set_xlim(0, 1)
+        ax1.tick_params(axis='both', which='major', 
+                             labelsize=self.group_size)
         
         # offset y ticks
         offset_ax1 = ScaledTranslation(-2.1, 0, self.fig.dpi_scale_trans)
@@ -121,7 +130,7 @@ class reg_plot:
         ax2.yaxis.tick_right()
         # plot reference line
         ax2.plot([1, 1], [1-0.2*num_items, num_items+0.2*num_items], "k--")
-        ax2.set_ylim(1-0.2*num_items, num_items+0.2*num_items)
+        ax2.set_ylim(ylims)
         #ax2.set_yticks([])
         ax2.set_yticks(ticks)
         ax2.set_yticklabels(self.df["Variable"].values[::-1])
@@ -140,12 +149,12 @@ class reg_plot:
         ax3.set_xticks([])
         ax3.set_yticks(ticks)
         ax3.set_yticklabels(odds_values[::-1])
-        ax3.set_ylim(1-0.2*num_items, num_items+0.2*num_items)
+        ax3.set_ylim(ylims)
         
         ax3.tick_params(right = False, left = False)
         
         # offset y ticks
-        offset_ax3 = ScaledTranslation(-1.55, 0, self.fig.dpi_scale_trans)
+        offset_ax3 = ScaledTranslation(-1.50, 0, self.fig.dpi_scale_trans)
         for label in ax3.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax3)
             

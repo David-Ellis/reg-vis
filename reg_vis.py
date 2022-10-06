@@ -53,6 +53,7 @@ class reg_plot:
         self.font_size = 10
         self.header_size = 11
         self.group_size = 10.5
+        self.var_offset = 0
         
     def load_data(self, data_path):
         extension = data_path.split(".")[-1]
@@ -61,33 +62,49 @@ class reg_plot:
         elif extension == "xlsx":
             self.df = pd.read_excel(data_path)
     
-    def plot(self):
+    def plot(self, counts = False):
         # set plot size
         plt.rc('font', size=self.font_size)
         
         num_items = len(self.df['Odds Ratio'])
         
-        self.fig = plt.figure(figsize = (7, num_items-2),)
+        if counts:
+            specWidth = 1500
+            figWidth = 10
+        else: 
+            specWidth = 1300
+            figWidth = 8
         
+        self.fig = plt.figure(figsize = (figWidth, num_items-2),)
         
-        gs = GridSpec(num_items*100 + 100, 1300)
+        gs = GridSpec(num_items*100 + 100, specWidth)
         head1 = plt.subplot(gs[:100, :500])
         head2 = plt.subplot(gs[:100, 500:900])
-        head3 = plt.subplot(gs[:100, 900:])
+        head3 = plt.subplot(gs[:100, 900:1300])
         
         ax1 = plt.subplot(gs[100:, :500])
         ax2 = plt.subplot(gs[100:, 500:900])
-        ax3 = plt.subplot(gs[100:, 900:])
+        ax3 = plt.subplot(gs[100:, 900:1300])
         
         ticks = np.arange(1, num_items+1)
         ylims = [1-0.1*num_items, num_items+0.1*num_items]
         
         
         ## Headers ##
-        header_labels = ["Variable", "Odds Ratio", 
-                         "       Odds Ratio\n(Confidence Interval)"]
-        header_offset = [-2.1, -1.7, -1.73]
-        for i, head in enumerate([head1, head2, head3]):
+        header_labels = ["Variable", 
+                         "Odds Ratio", 
+                         "       Odds Ratio\n(Confidence Interval)",
+                         "Number (N)"]
+        header_offset = [-2.35, -1.9, 
+                         -1.83- counts*0.11, -1.05]        
+        heads = [head1, head2, head3]
+        
+        if counts:
+            head4 = plt.subplot(gs[:100, 1300:specWidth])
+            heads.append(head4)
+            ax4 = plt.subplot(gs[100:, 1300:specWidth])
+
+        for i, head in enumerate(heads):
             head.set_xticks([])
             head.yaxis.set_label_position("right")
             head.yaxis.tick_right()
@@ -116,7 +133,7 @@ class reg_plot:
                              labelsize=self.group_size)
         
         # offset y ticks
-        offset_ax1 = ScaledTranslation(-2.1, 0, self.fig.dpi_scale_trans)
+        offset_ax1 = ScaledTranslation(-2.4, 0, self.fig.dpi_scale_trans)
         for label in ax1.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax1)
         
@@ -137,7 +154,7 @@ class reg_plot:
         ax2.tick_params(right = False, left = False)
         
         # offset y ticks
-        offset_ax2 = ScaledTranslation(-2.5, 0, self.fig.dpi_scale_trans)
+        offset_ax2 = ScaledTranslation(-2.85 + self.var_offset, 0, self.fig.dpi_scale_trans)
         for label in ax2.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax2)
         
@@ -154,9 +171,22 @@ class reg_plot:
         ax3.tick_params(right = False, left = False)
         
         # offset y ticks
-        offset_ax3 = ScaledTranslation(-1.50, 0, self.fig.dpi_scale_trans)
+        offset_ax3 = ScaledTranslation(-1.60 - counts*0.11, 0, self.fig.dpi_scale_trans)
         for label in ax3.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax3)
+            
+        ## Variable counts ##
+        if counts:
+            ax4.set_xticks([])
+            ax4.set_yticks(ticks)
+            ax4.tick_params(right = False, left = False)
+            # Add the numbers here
+            ax4.set_yticklabels(self.df["Number"].values[::-1])
+            ax4.set_ylim(ylims)
+            
+            offset_ax4 = ScaledTranslation(0.7, 0, self.fig.dpi_scale_trans)
+            for label in ax4.yaxis.get_majorticklabels():
+                label.set_transform(label.get_transform() + offset_ax4)
             
     def save_plot(self, save_path):
         plt.savefig(save_path, bbox_inches="tight")

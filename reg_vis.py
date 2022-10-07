@@ -97,7 +97,9 @@ class reg_plot:
              counts = False,
              group1_color = None,
              group2_color = None,
-             group_alpha = 0.2):
+             group_alpha = 0.2,
+             head_fill = None,
+             head_alpha = 0.2):
         # set plot size
         plt.rc('font', size=self.font_size)
         
@@ -242,32 +244,31 @@ class reg_plot:
                     boundary[0] = ylims[1]
                 elif i == len(boundaries)-1:
                     boundary[1] = ylims[0]-0.5
+                    
                 if color != None:    
-                    ax1.fill_between([0, 1], 
-                                     [boundary[0]+0.5,boundary[0]+0.5],
-                                     [boundary[1]+0.5,boundary[1]+0.5],
-                                     color = color,
-                                     lw = 0,
-                                     alpha = group_alpha)
-                    ax2.fill_between([-10, 10], 
-                                     [boundary[0]+0.5,boundary[0]+0.5],
-                                     [boundary[1]+0.5,boundary[1]+0.5],
-                                     color = color,
-                                     lw = 0,
-                                     alpha = group_alpha)
-                    ax3.fill_between([0, 1], 
-                                     [boundary[0]+0.5,boundary[0]+0.5],
-                                     [boundary[1]+0.5,boundary[1]+0.5],
-                                     color = color,
-                                     lw = 0,
-                                     alpha = group_alpha)
+                    color_ax = [ax1, ax2, ax3]
                     if counts:
-                        ax4.fill_between([0, 1], 
-                                     [boundary[0]+0.5,boundary[0]+0.5],
-                                     [boundary[1]+0.5,boundary[1]+0.5],
-                                     color = color,
-                                     lw = 0,
-                                     alpha = group_alpha)
+                        color_ax.append(ax4)
+                    for ax in color_ax:
+                        ax.fill_between([-10, 20], 
+                                         [boundary[0]+0.5,boundary[0]+0.5],
+                                         [boundary[1]+0.5,boundary[1]+0.5],
+                                         color = color,
+                                         alpha = group_alpha)
+                        
+        ## Header colour ##
+        if head_fill != None:
+            fill_head = [head1, head2, head3]
+            if counts:
+                fill_head.append(head4)
+            for head in fill_head:
+                head.set_xlim(0, 1)
+                head.set_ylim(0, 1)
+                head.fill_between([0, 1], [0,0], [1,1],
+                                color = head_fill,
+                                lw = 0,
+                                alpha = head_alpha)
+        
     def save_plot(self, save_path):
         plt.savefig(save_path, bbox_inches="tight")
 

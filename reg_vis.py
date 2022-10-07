@@ -84,14 +84,15 @@ class reg_plot:
         self.font_size = 10
         self.header_size = 11
         self.group_size = 10.5
+        self.group_offset = 0
         self.var_offset = 0
         
-    def load_data(self, data_path):
+    def load_data(self, data_path, sheet = 0):
         extension = data_path.split(".")[-1]
         if extension == "csv":
             self.df = pd.from_csv(data_path)
         elif extension == "xlsx":
-            self.df = pd.read_excel(data_path)
+            self.df = pd.read_excel(data_path, sheet_name = sheet)
     
     def plot(self, 
              counts = False,
@@ -125,8 +126,8 @@ class reg_plot:
         ax3 = plt.subplot(gs[100:, 900:1300])
         
         ticks = np.arange(1, num_items+1)
-        ylims = [1-0.1*num_items, num_items+0.1*num_items]
-        
+        #ylims = [1-0.1*num_items, num_items+0.1*num_items]
+        ylims = [1-0.5, num_items+0.5]
         ## Headers ##
         header_labels = ["Variable", 
                          "Odds Ratio", 
@@ -170,7 +171,8 @@ class reg_plot:
                              labelsize=self.group_size)
         
         # offset y ticks
-        offset_ax1 = ScaledTranslation(-2.4, 0, self.fig.dpi_scale_trans)
+        offset_ax1 = ScaledTranslation(-2.4 + self.group_offset, 0, 
+                                       self.fig.dpi_scale_trans)
         for label in ax1.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax1)
         

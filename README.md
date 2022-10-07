@@ -12,7 +12,7 @@ import reg_vis
 reg_vis = reg_vis.reg_plot()
 
 # Load data
-reg_vis.load_data("example_data.xlsx")
+reg_vis.load_data("example_data.xlsx", sheet = 0)
 ```
 
 You can equally load the data into a pandas dataframe yourself and then use `reg_vis.df = data`.
@@ -69,6 +69,8 @@ We can also add background colour to the column headers and the different variab
 
 
 ```python
+reg_vis.result_name = "RRR"
+
 reg_vis.plot(counts = True, 
              group1_color = None,
              group2_color = "tab:red",
@@ -83,3 +85,8 @@ reg_vis.save_plot("example_plot3.png")
 ![png](example/example_plot3.png)
     
 
+
+
+```python
+
+```

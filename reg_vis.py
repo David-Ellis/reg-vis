@@ -270,7 +270,7 @@ class reg_plot:
                                 alpha = head_alpha)
         
     def save_plot(self, save_path):
-        plt.savefig(save_path, bbox_inches="tight")
+        plt.savefig(save_path, bbox_inches="tight", dpi = 300)
 
 
 

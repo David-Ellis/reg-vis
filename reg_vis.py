@@ -48,6 +48,37 @@ def pack_errors(df):
             errors[1, i] = df["Odds Ratio"][i] - df['Conf int lower'][i]
     return errors
 
+def firstUnqiue(input_list):
+    output = []
+    for item in input_list:
+        if item not in output:
+            output.append(item)
+    return output
+
+def getGroupBoundaries(df):
+    '''
+    Parameters
+    ----------
+    all_groups : array-like
+        list of the group each variable belongs to .
+
+    Returns
+    -------
+    boundaries : array
+        array of lists containing boundaries for each group.
+    '''
+    all_groups = df["Variable group"].values
+    groups = firstUnqiue(all_groups)
+    N_groups = len(groups)
+    boundaries = np.zeros(N_groups, dtype = object)
+    last = len(all_groups)
+    for i, group in enumerate(groups):
+        N_group_i = len(all_groups[all_groups == group])
+        new_boundary = [last, last - N_group_i]
+        last -= N_group_i
+        boundaries[i] = new_boundary
+    return boundaries
+
 class reg_plot:
     def __init__(self):
         self.font_size = 10
@@ -62,7 +93,11 @@ class reg_plot:
         elif extension == "xlsx":
             self.df = pd.read_excel(data_path)
     
-    def plot(self, counts = False):
+    def plot(self, 
+             counts = False,
+             group1_color = None,
+             group2_color = None,
+             group_alpha = 0.2):
         # set plot size
         plt.rc('font', size=self.font_size)
         
@@ -88,7 +123,6 @@ class reg_plot:
         
         ticks = np.arange(1, num_items+1)
         ylims = [1-0.1*num_items, num_items+0.1*num_items]
-        
         
         ## Headers ##
         header_labels = ["Variable", 
@@ -152,6 +186,9 @@ class reg_plot:
         ax2.set_yticks(ticks)
         ax2.set_yticklabels(self.df["Variable"].values[::-1])
         ax2.tick_params(right = False, left = False)
+        ax2.set_xlim(min(self.df['Odds Ratio'])-0.3, 
+                     max(self.df['Odds Ratio'])*1.3)
+        
         
         # offset y ticks
         offset_ax2 = ScaledTranslation(-2.85 + self.var_offset, 0, self.fig.dpi_scale_trans)
@@ -169,7 +206,7 @@ class reg_plot:
         ax3.set_ylim(ylims)
         
         ax3.tick_params(right = False, left = False)
-        
+        ax3.set_xlim(0, 1)
         # offset y ticks
         offset_ax3 = ScaledTranslation(-1.60 - counts*0.11, 0, self.fig.dpi_scale_trans)
         for label in ax3.yaxis.get_majorticklabels():
@@ -185,13 +222,52 @@ class reg_plot:
             # Add the numbers here
             ax4.set_yticklabels(self.df["Number"].values[::-1])
             ax4.set_ylim(ylims)
-            
+            ax4.set_xlim(0, 1)
             # get maximum number magnitude to move positions accordingly
             max_mag = np.log10(max(self.df["Number"].values)) + 1
             offset_ax4 = ScaledTranslation(-0.6-max_mag/20, 0, self.fig.dpi_scale_trans)
             for label in ax4.yaxis.get_majorticklabels():
                 label.set_transform(label.get_transform() + offset_ax4)
             
+        ## Group color ##
+        if group1_color != None or group2_color != None :
+            boundaries = getGroupBoundaries(self.df)
+            for i, boundary in enumerate(boundaries):
+                if i % 2 == 0:
+                    color = group1_color
+                else:
+                    color = group2_color
+                    
+                if i == 0:
+                    boundary[0] = ylims[1]
+                elif i == len(boundaries)-1:
+                    boundary[1] = ylims[0]-0.5
+                if color != None:    
+                    ax1.fill_between([0, 1], 
+                                     [boundary[0]+0.5,boundary[0]+0.5],
+                                     [boundary[1]+0.5,boundary[1]+0.5],
+                                     color = color,
+                                     lw = 0,
+                                     alpha = group_alpha)
+                    ax2.fill_between([-10, 10], 
+                                     [boundary[0]+0.5,boundary[0]+0.5],
+                                     [boundary[1]+0.5,boundary[1]+0.5],
+                                     color = color,
+                                     lw = 0,
+                                     alpha = group_alpha)
+                    ax3.fill_between([0, 1], 
+                                     [boundary[0]+0.5,boundary[0]+0.5],
+                                     [boundary[1]+0.5,boundary[1]+0.5],
+                                     color = color,
+                                     lw = 0,
+                                     alpha = group_alpha)
+                    if counts:
+                        ax4.fill_between([0, 1], 
+                                     [boundary[0]+0.5,boundary[0]+0.5],
+                                     [boundary[1]+0.5,boundary[1]+0.5],
+                                     color = color,
+                                     lw = 0,
+                                     alpha = group_alpha)
     def save_plot(self, save_path):
         plt.savefig(save_path, bbox_inches="tight")
 

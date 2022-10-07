@@ -176,15 +176,19 @@ class reg_plot:
             label.set_transform(label.get_transform() + offset_ax3)
             
         ## Variable counts ##
+        
         if counts:
             ax4.set_xticks([])
             ax4.set_yticks(ticks)
+            ax4.yaxis.tick_right()
             ax4.tick_params(right = False, left = False)
             # Add the numbers here
             ax4.set_yticklabels(self.df["Number"].values[::-1])
             ax4.set_ylim(ylims)
             
-            offset_ax4 = ScaledTranslation(0.7, 0, self.fig.dpi_scale_trans)
+            # get maximum number magnitude to move positions accordingly
+            max_mag = np.log10(max(self.df["Number"].values)) + 1
+            offset_ax4 = ScaledTranslation(-0.6-max_mag/20, 0, self.fig.dpi_scale_trans)
             for label in ax4.yaxis.get_majorticklabels():
                 label.set_transform(label.get_transform() + offset_ax4)
             

@@ -10,7 +10,7 @@ from matplotlib.transforms import ScaledTranslation
 
 def pack_group_names(df):
     group_names = []
-    num_items = len(df['Odds Ratio'])
+    num_items = len(df['Result'])
     last_group = "Start"
     for i in range(num_items):
         group_i = df['Variable group'][i]
@@ -23,19 +23,19 @@ def pack_group_names(df):
 
 def pack_odds_values(df):
     odds_values = []
-    num_items = len(df['Odds Ratio'])
+    num_items = len(df['Result'])
     for i in range(num_items):
         if df["Conf int upper"][i] == "Ref":
             new_val = "    Reference"
         else:
-            new_val = "{:.2f} ({:.2f}, {:.2f})".format(df["Odds Ratio"][i],
+            new_val = "{:.2f} ({:.2f}, {:.2f})".format(df["Result"][i],
                                                     df["Conf int lower"][i],
                                                     df["Conf int upper"][i])
         odds_values.append(new_val)
     return odds_values
 
 def pack_errors(df):
-    num_items = len(df['Odds Ratio'])
+    num_items = len(df['Result'])
     errors = np.zeros((2, num_items))
     for i in range(num_items):
         # if ref, check that upper and lower are both marked as reference
@@ -44,8 +44,8 @@ def pack_errors(df):
                 "Both upper and lower error value should be \"Ref\""
             pass
         else:
-            errors[0, i] = df['Conf int upper'][i] - df["Odds Ratio"][i]
-            errors[1, i] = df["Odds Ratio"][i] - df['Conf int lower'][i]
+            errors[0, i] = df['Conf int upper'][i] - df["Result"][i]
+            errors[1, i] = df["Result"][i] - df['Conf int lower'][i]
     return errors
 
 def firstUnqiue(input_list):
@@ -86,6 +86,7 @@ class reg_plot:
         self.group_size = 10.5
         self.group_offset = 0
         self.var_offset = 0
+        self.result_name = "Result"
         
     def load_data(self, data_path, sheet = 0):
         extension = data_path.split(".")[-1]
@@ -104,7 +105,7 @@ class reg_plot:
         # set plot size
         plt.rc('font', size=self.font_size)
         
-        num_items = len(self.df['Odds Ratio'])
+        num_items = len(self.df['Result'])
         
         if counts:
             specWidth = 1500
@@ -130,8 +131,8 @@ class reg_plot:
         ylims = [1-0.5, num_items+0.5]
         ## Headers ##
         header_labels = ["Variable", 
-                         "Odds Ratio", 
-                         "       Odds Ratio\n(Confidence Interval)",
+                         self.result_name, 
+                         "{} (Confidence\nInterval)".format(self.result_name),
                          "Number (N)"]
         header_offset = [-2.35, -1.9, 
                          -1.83- counts*0.11, -1.05]        
@@ -177,10 +178,10 @@ class reg_plot:
             label.set_transform(label.get_transform() + offset_ax1)
         
                 
-        ## Odds ratio plot ##
+        ## Result plot ##
         errors = pack_errors(self.df)
         
-        ax2.errorbar(self.df["Odds Ratio"], ticks[::-1], xerr=errors, fmt = "ko")
+        ax2.errorbar(self.df["Result"], ticks[::-1], xerr=errors, fmt = "ko")
         # move y-axis to the right
         ax2.yaxis.set_label_position("right")
         ax2.yaxis.tick_right()
@@ -191,8 +192,8 @@ class reg_plot:
         ax2.set_yticks(ticks)
         ax2.set_yticklabels(self.df["Variable"].values[::-1])
         ax2.tick_params(right = False, left = False)
-        ax2.set_xlim(min(self.df['Odds Ratio'])-0.3, 
-                     max(self.df['Odds Ratio'])*1.3)
+        ax2.set_xlim(min(self.df['Result'])-0.3, 
+                     max(self.df['Result'])*1.3)
         
         
         # offset y ticks
@@ -200,7 +201,7 @@ class reg_plot:
         for label in ax2.yaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset_ax2)
         
-        ## Odds ratio numbers ##
+        ## Result numbers ##
         odds_values = pack_odds_values(self.df)
         # move y-axis to the right
         ax3.yaxis.set_label_position("right")

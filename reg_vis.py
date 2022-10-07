@@ -87,6 +87,7 @@ class reg_plot:
         self.group_offset = 0
         self.var_offset = 0
         self.result_name = "Result"
+        self.xlim = None
         
     def load_data(self, data_path, sheet = 0):
         extension = data_path.split(".")[-1]
@@ -192,8 +193,13 @@ class reg_plot:
         ax2.set_yticks(ticks)
         ax2.set_yticklabels(self.df["Variable"].values[::-1])
         ax2.tick_params(right = False, left = False)
-        ax2.set_xlim(min(self.df['Result'])-0.3, 
-                     max(self.df['Result'])*1.3)
+        
+        # set x-limits
+        if self.xlim == None:
+            ax2.set_xlim(min(self.df['Result'])-0.3, 
+                         max(self.df['Result'])*1.3)
+        else:
+            ax2.set_xlim(self.xlim)
         
         
         # offset y ticks

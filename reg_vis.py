@@ -112,7 +112,8 @@ class reg_plot:
             specWidth = 1300
             figWidth = 8
         
-        self.fig = plt.figure(figsize = (figWidth, num_items-2),)
+        self.fig = plt.figure(figsize = (figWidth, num_items-2),
+                              facecolor='white')
         
         gs = GridSpec(num_items*100 + 100, specWidth)
         head1 = plt.subplot(gs[:100, :500])

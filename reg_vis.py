@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 from matplotlib.transforms import ScaledTranslation
 
-def pack_group_names(df):
+def pack_group_names(df, result_name):
     group_names = []
-    num_items = len(df['Result'])
+    num_items = len(df[result_name])
     last_group = "Start"
     for i in range(num_items):
         group_i = df['Variable group'][i]
@@ -21,21 +21,21 @@ def pack_group_names(df):
             group_names.append("")
     return group_names
 
-def pack_odds_values(df):
+def pack_odds_values(df, result_name):
     odds_values = []
-    num_items = len(df['Result'])
+    num_items = len(df[result_name])
     for i in range(num_items):
         if df["Conf int upper"][i] == "Ref":
             new_val = "    Reference"
         else:
-            new_val = "{:.2f} ({:.2f}, {:.2f})".format(df["Result"][i],
-                                                    df["Conf int lower"][i],
-                                                    df["Conf int upper"][i])
+            new_val = "{:.2f} ({:.2f}, {:.2f})".format(df[result_name][i],
+                                                    float(df["Conf int lower"][i]),
+                                                    float(df["Conf int upper"][i]))
         odds_values.append(new_val)
     return odds_values
 
-def pack_errors(df):
-    num_items = len(df['Result'])
+def pack_errors(df, result_name):
+    num_items = len(df[result_name])
     errors = np.zeros((2, num_items))
     for i in range(num_items):
         # if ref, check that upper and lower are both marked as reference
@@ -44,8 +44,8 @@ def pack_errors(df):
                 "Both upper and lower error value should be \"Ref\""
             pass
         else:
-            errors[0, i] = df['Conf int upper'][i] - df["Result"][i]
-            errors[1, i] = df["Result"][i] - df['Conf int lower'][i]
+            errors[0, i] = float(df['Conf int upper'][i]) - df[result_name][i]
+            errors[1, i] = df[result_name][i] - float(df['Conf int lower'][i])
     return errors
 
 def firstUnqiue(input_list):
@@ -102,11 +102,12 @@ class reg_plot:
              group2_color = None,
              group_alpha = 0.2,
              head_fill = None,
-             head_alpha = 0.2):
+             head_alpha = 0.2,
+             length_scale = 1):
         # set plot size
         plt.rc('font', size=self.font_size)
         
-        num_items = len(self.df['Result'])
+        num_items = len(self.df[self.result_name])
         
         if counts:
             specWidth = 1500
@@ -115,17 +116,19 @@ class reg_plot:
             specWidth = 1300
             figWidth = 8
         
-        self.fig = plt.figure(figsize = (figWidth, num_items-2),
-                              facecolor='white')
+        self.fig = plt.figure(facecolor='white')
+        self.fig.set_figheight(length_scale*(num_items/4))
+        self.fig.set_figwidth(figWidth)
         
+        print(self.fig.get_size_inches())
         gs = GridSpec(num_items*100 + 100, specWidth)
-        head1 = plt.subplot(gs[:100, :500])
-        head2 = plt.subplot(gs[:100, 500:900])
-        head3 = plt.subplot(gs[:100, 900:1300])
+        head1 = self.fig.add_subplot(gs[:100, :500])
+        head2 = self.fig.add_subplot(gs[:100, 500:900])
+        head3 = self.fig.add_subplot(gs[:100, 900:1300])
         
-        ax1 = plt.subplot(gs[100:, :500])
-        ax2 = plt.subplot(gs[100:, 500:900])
-        ax3 = plt.subplot(gs[100:, 900:1300])
+        ax1 = self.fig.add_subplot(gs[100:, :500])
+        ax2 = self.fig.add_subplot(gs[100:, 500:900])
+        ax3 = self.fig.add_subplot(gs[100:, 900:1300])
         
         ticks = np.arange(1, num_items+1)
         #ylims = [1-0.1*num_items, num_items+0.1*num_items]
@@ -133,10 +136,10 @@ class reg_plot:
         ## Headers ##
         header_labels = ["Variable", 
                          self.result_name, 
-                         "{} (Confidence\nInterval)".format(self.result_name),
+                         "Confidence Interval",
                          "Number (N)"]
         header_offset = [-2.35, -1.9, 
-                         -1.83- counts*0.11, -1.05]        
+                         -1.9, -1.05]        
         heads = [head1, head2, head3]
         
         if counts:
@@ -159,7 +162,7 @@ class reg_plot:
                 label.set_transform(label.get_transform() + offset)
                 
         ## Variable names ##
-        group_names = pack_group_names(self.df)
+        group_names = pack_group_names(self.df, self.result_name)
         # move y-axis to the right
         ax1.yaxis.set_label_position("right")
         ax1.yaxis.tick_right()
@@ -180,9 +183,9 @@ class reg_plot:
         
                 
         ## Result plot ##
-        errors = pack_errors(self.df)
+        errors = pack_errors(self.df, self.result_name)
         
-        ax2.errorbar(self.df["Result"], ticks[::-1], xerr=errors, fmt = "ko")
+        ax2.errorbar(self.df[self.result_name], ticks[::-1], xerr=errors, fmt = "ko")
         # move y-axis to the right
         ax2.yaxis.set_label_position("right")
         ax2.yaxis.tick_right()
@@ -196,8 +199,8 @@ class reg_plot:
         
         # set x-limits
         if self.xlim == None:
-            ax2.set_xlim(min(self.df['Result'])-0.3, 
-                         max(self.df['Result'])*1.3)
+            ax2.set_xlim(min(self.df[self.result_name])-0.3, 
+                         max(self.df[self.result_name])*1.3)
         else:
             ax2.set_xlim(self.xlim)
         
@@ -208,7 +211,7 @@ class reg_plot:
             label.set_transform(label.get_transform() + offset_ax2)
         
         ## Result numbers ##
-        odds_values = pack_odds_values(self.df)
+        odds_values = pack_odds_values(self.df, self.result_name)
         # move y-axis to the right
         ax3.yaxis.set_label_position("right")
         ax3.yaxis.tick_right()
@@ -280,7 +283,7 @@ class reg_plot:
                                 alpha = head_alpha)
         
     def save_plot(self, save_path):
-        plt.savefig(save_path, bbox_inches="tight", dpi = 300)
+        plt.savefig(save_path, bbox_inches="tight", dpi = 300) 
 
 
 
